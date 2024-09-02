@@ -13,9 +13,9 @@ int main(void)
 	int maxDegrees = 360;
 	//const int maxPoints = 3;
 
-	vector3 startPos = { 0.0f, 0.0f, 0.0f, };
+	Vector3 startPos = { 0.0f, 0.0f, 0.0f, };
 
-	Vector3 vectorA = { rand(0, maxDegrees), rand(0, maxDegrees, rand(0, maxDegrees) };
+	Vector3 vectorA = { rand() % maxDegrees, rand() % maxDegrees, rand() % maxDegrees };
 	Vector3 vectorB = { 0.0f, 0.0f, 0.0f };
 	Vector3 vectorC = { 0.0f, 0.0f, 0.0f };
 
