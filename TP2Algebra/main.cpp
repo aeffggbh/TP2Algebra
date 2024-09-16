@@ -16,14 +16,15 @@ Camera3D camera;
 
 VecRect vectorA;
 VecRect vectorB;
+VecRect vectorC;
 
-Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+int n = 1;
 
 int main(void)
 {
 	srand(time(NULL));
 
-	camera.position = { 0.0f, 500.0f, 10.0f };  // Camera position
+	camera.position = { 0.0f, 400.0f, 10.0f };  // Camera position
 	camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
 	camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
 	camera.fovy = 64.0f;                                // Camera field-of-view Y
@@ -64,6 +65,18 @@ int main(void)
 
 	int mag = sqrt(pow(vectorA.finishPos.x - vectorA.startPos.x, 2.0f) + pow(vectorA.finishPos.y - vectorA.startPos.y, 2.0f) + pow(vectorA.finishPos.z - vectorA.startPos.z, 2.0f));
 
+	vectorC.magnitude = 1 / n * vectorA.magnitude;
+
+	vectorC.startPos = startPos;
+
+	vectorC.rotationAngles.x = vectorA.rotationAngles.x * vectorB.rotationAngles.x;
+	vectorC.rotationAngles.y = vectorA.rotationAngles.y * vectorB.rotationAngles.y;
+	vectorC.rotationAngles.z = vectorA.rotationAngles.z * vectorB.rotationAngles.z;
+
+	vectorC.finishPos.x = vectorC.magnitude * cos(vectorC.rotationAngles.y) * cos(vectorC.rotationAngles.z);
+	vectorC.finishPos.y = vectorC.magnitude * sin(vectorC.rotationAngles.x) * cos(vectorC.rotationAngles.y);
+	vectorC.finishPos.z = vectorC.magnitude * sin(vectorC.rotationAngles.z);
+
 	std::cout << "mag: " << vectorA.magnitude << std::endl;
 	std::cout << "mag (calculada): " << mag << std::endl;
 	std::cout << "x: " << vectorA.finishPos.x << std::endl;
@@ -96,7 +109,8 @@ void Draw()
 	BeginMode3D(camera);
 
 	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
-	DrawLine3D(vectorB.startPos,vectorB.finishPos, BLUE);
+	DrawLine3D(vectorB.startPos, vectorB.finishPos, BLUE);
+	DrawLine3D(vectorC.startPos,vectorC.finishPos, GREEN);
 
 	//DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
 
