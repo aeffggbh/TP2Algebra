@@ -12,9 +12,22 @@ struct VecRect
 	float magnitude;
 };
 
+Camera3D camera;
+
+VecRect vectorA;
+VecRect vectorB;
+
+Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+
 int main(void)
 {
 	srand(time(NULL));
+
+	camera.position = { 0.0f, 500.0f, 10.0f };  // Camera position
+	camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
+	camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+	camera.fovy = 64.0f;                                // Camera field-of-view Y
+	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
 	const int screenWidth = 800;
 	const int screenHeight = 500;
@@ -26,7 +39,6 @@ int main(void)
 
 	Vector3 startPos = { 0.0f, 0.0f, 0.0f, };
 
-	VecRect vectorA;
 	VecRect aux;
 	vectorA.startPos = startPos;
 	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
@@ -41,12 +53,14 @@ int main(void)
 	aux.rotationAngles.y *= -1;
 	aux.rotationAngles.z *= -1;
 
-	VecRect vectorB;
-	
-	vectorB.rotationAngles.x = aux.rotationAngles.x * vectorA.rotationAngles.x;
-	vectorB.rotationAngles.y = aux.rotationAngles.y * vectorA.rotationAngles.y;
-	vectorB.rotationAngles.z = aux.rotationAngles.z * vectorA.rotationAngles.z;
+	vectorB.rotationAngles.x = vectorA.rotationAngles.x * aux.rotationAngles.x;
+	vectorB.rotationAngles.y = vectorA.rotationAngles.y * aux.rotationAngles.y;
+	vectorB.rotationAngles.z = vectorA.rotationAngles.z * aux.rotationAngles.z;
 
+	vectorB.magnitude = vectorA.magnitude;
+	vectorB.finishPos.x = vectorB.magnitude * cos(vectorB.rotationAngles.y) * cos(vectorB.rotationAngles.z);
+	vectorB.finishPos.y = vectorB.magnitude * sin(vectorB.rotationAngles.x) * cos(vectorB.rotationAngles.y);
+	vectorB.finishPos.z = vectorB.magnitude * sin(vectorB.rotationAngles.z);
 
 	int mag = sqrt(pow(vectorA.finishPos.x - vectorA.startPos.x, 2.0f) + pow(vectorA.finishPos.y - vectorA.startPos.y, 2.0f) + pow(vectorA.finishPos.z - vectorA.startPos.z, 2.0f));
 
@@ -77,9 +91,16 @@ void Update()
 void Draw()
 {
 	BeginDrawing();
-
 	ClearBackground(RAYWHITE);
 
+	BeginMode3D(camera);
+
+	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
+	DrawLine3D(vectorB.startPos,vectorB.finishPos, BLUE);
+
+	//DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+
+	EndMode3D();
 
 	EndDrawing();
 }
