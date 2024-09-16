@@ -4,20 +4,34 @@
 void Update();
 void Draw();
 
+struct VecRect
+{
+	Vector3 pos;
+	Vector3 rotationAngles;
+	float magnitude;
+};
+
 int main(void)
 {
 	srand(time(NULL));
-
+		
 	const int screenWidth = 800;
 	const int screenHeight = 500;
+	const int maxMagnitude = 1000;
+
 	int maxDegrees = 360;
 	//const int maxPoints = 3;
 
 	Vector3 startPos = { 0.0f, 0.0f, 0.0f, };
 
-	Vector3 vectorA = { rand() % maxDegrees, rand() % maxDegrees, rand() % maxDegrees };
-	Vector3 vectorB = { 0.0f, 0.0f, 0.0f };
-	Vector3 vectorC = { 0.0f, 0.0f, 0.0f };
+	VecRect vectorA;
+	VecRect vectorB;
+	VecRect vectorC;
+
+	vectorA.pos = startPos;
+	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
+	vectorA.magnitude = GetRandomValue(0, maxMagnitude) / 10;
+
 
 	//Vector3 points[maxPoints] = { a, b, c };
 
