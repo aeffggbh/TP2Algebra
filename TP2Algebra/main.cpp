@@ -15,7 +15,7 @@ struct VecRect
 int main(void)
 {
 	srand(time(NULL));
-		
+
 	const int screenWidth = 800;
 	const int screenHeight = 500;
 	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
@@ -23,19 +23,30 @@ int main(void)
 	const int maxMagnitude = 1000;
 
 	int maxDegrees = 360;
-	//const int maxPoints = 3;
 
 	Vector3 startPos = { 0.0f, 0.0f, 0.0f, };
 
 	VecRect vectorA;
+	VecRect aux;
 	vectorA.startPos = startPos;
 	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	//vectorA.magnitude = GetRandomValue(0, maxMagnitude) / 10;
 	vectorA.magnitude = 50.0f;
 
 	vectorA.finishPos.x = vectorA.magnitude * cos(vectorA.rotationAngles.y) * cos(vectorA.rotationAngles.z);
 	vectorA.finishPos.y = vectorA.magnitude * sin(vectorA.rotationAngles.x) * cos(vectorA.rotationAngles.y);
 	vectorA.finishPos.z = vectorA.magnitude * sin(vectorA.rotationAngles.z);
+
+	aux = vectorA;
+	aux.rotationAngles.x *= -1;
+	aux.rotationAngles.y *= -1;
+	aux.rotationAngles.z *= -1;
+
+	VecRect vectorB;
+	
+	vectorB.rotationAngles.x = aux.rotationAngles.x * vectorA.rotationAngles.x;
+	vectorB.rotationAngles.y = aux.rotationAngles.y * vectorA.rotationAngles.y;
+	vectorB.rotationAngles.z = aux.rotationAngles.z * vectorA.rotationAngles.z;
+
 
 	int mag = sqrt(pow(vectorA.finishPos.x - vectorA.startPos.x, 2.0f) + pow(vectorA.finishPos.y - vectorA.startPos.y, 2.0f) + pow(vectorA.finishPos.z - vectorA.startPos.z, 2.0f));
 
@@ -44,8 +55,6 @@ int main(void)
 	std::cout << "x: " << vectorA.finishPos.x << std::endl;
 	std::cout << "y: " << vectorA.finishPos.y << std::endl;
 	std::cout << "z: " << vectorA.finishPos.z << std::endl;
-
-	//Vector3 points[maxPoints] = { a, b, c };
 
 	SetTargetFPS(60);
 
