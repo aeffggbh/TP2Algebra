@@ -18,7 +18,7 @@ VecRect vectorA;
 VecRect vectorB;
 VecRect vectorC;
 
-int n = 1;
+float n = 2;
 
 int main(void)
 {
