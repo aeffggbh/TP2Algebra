@@ -20,20 +20,61 @@ VecRect vectorC;
 
 float n = 2;
 
+void DrawVectors();
+void InitVectors();
+void InitCamera();
+
 int main(void)
 {
 	srand(time(NULL));
-
-	camera.position = { 0.0f, 400.0f, 10.0f };  // Camera position
-	camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
-	camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-	camera.fovy = 64.0f;                                // Camera field-of-view Y
-	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
 	const int screenWidth = 800;
 	const int screenHeight = 500;
 	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
 
+	InitCamera();
+	InitVectors();
+
+	SetTargetFPS(60);
+
+	while (!WindowShouldClose())
+	{
+		Update();
+		Draw();
+	}
+
+	CloseWindow();
+
+	return 0;
+}
+
+void Update()
+{
+
+}
+
+void Draw()
+{
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+	BeginMode3D(camera);
+	DrawVectors();
+	//DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+
+	EndMode3D();
+
+	EndDrawing();
+}
+
+void DrawVectors()
+{
+	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
+	DrawLine3D(vectorB.startPos, vectorB.finishPos, BLUE);
+	DrawLine3D(vectorC.startPos, vectorC.finishPos, GREEN);
+}
+
+void InitVectors()
+{
 	const int maxMagnitude = 1000;
 
 	int maxDegrees = 360;
@@ -82,39 +123,14 @@ int main(void)
 	std::cout << "x: " << vectorA.finishPos.x << std::endl;
 	std::cout << "y: " << vectorA.finishPos.y << std::endl;
 	std::cout << "z: " << vectorA.finishPos.z << std::endl;
-
-	SetTargetFPS(60);
-
-	while (!WindowShouldClose())
-	{
-		Update();
-		Draw();
-	}
-
-	CloseWindow();
-
-	return 0;
 }
 
-void Update()
+void InitCamera()
 {
+	camera.position = { 0.0f, 400.0f, 10.0f };  // Camera position
+	camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
+	camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+	camera.fovy = 64.0f;                                // Camera field-of-view Y
+	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
-}
-
-void Draw()
-{
-	BeginDrawing();
-	ClearBackground(RAYWHITE);
-
-	BeginMode3D(camera);
-
-	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
-	DrawLine3D(vectorB.startPos, vectorB.finishPos, BLUE);
-	DrawLine3D(vectorC.startPos,vectorC.finishPos, GREEN);
-
-	//DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-
-	EndMode3D();
-
-	EndDrawing();
 }
