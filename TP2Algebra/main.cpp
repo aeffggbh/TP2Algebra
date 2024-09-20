@@ -1,8 +1,6 @@
 #include <iostream>
 #include "raylib.h"
 
-void Update();
-void Draw();
 
 struct VecRect
 {
@@ -12,15 +10,30 @@ struct VecRect
 	float magnitude;
 };
 
+struct Cube
+{
+	VecRect vecA2;
+	VecRect vecB2;
+	VecRect vecC2;
+	VecRect vecC3;
+	VecRect vecC4;
+};
+
 Camera3D camera;
 
 VecRect vectorA;
 VecRect vectorB;
 VecRect vectorC;
+Cube cube;
 
 float n = 2;
 
-void DrawVectors();
+void Init();
+void Update();
+void Draw();
+void BuildCube();
+void BuildPyramid();
+void DrawFirstCube();
 void InitVectors();
 void InitCamera();
 
@@ -28,12 +41,7 @@ int main(void)
 {
 	srand(time(NULL));
 
-	const int screenWidth = 800;
-	const int screenHeight = 500;
-	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
-
-	InitCamera();
-	InitVectors();
+	Init();
 
 	SetTargetFPS(60);
 
@@ -48,7 +56,56 @@ int main(void)
 	return 0;
 }
 
+void Init()
+{
+	const int screenWidth = 800;
+	const int screenHeight = 500;
+	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
+
+	InitCamera();
+	InitVectors();
+	BuildCube();
+
+}
+
 void Update()
+{
+
+}
+
+void BuildCube()
+{
+	cube.vecC2 = vectorC;
+	cube.vecC2.startPos = vectorB.finishPos;
+	cube.vecC2.finishPos.x = cube.vecC2.magnitude * cos(cube.vecC2.rotationAngles.y) * cos(cube.vecC2.rotationAngles.z);
+	cube.vecC2.finishPos.y = cube.vecC2.magnitude * sin(cube.vecC2.rotationAngles.x) * cos(cube.vecC2.rotationAngles.y);
+	cube.vecC2.finishPos.z = cube.vecC2.magnitude * sin(cube.vecC2.rotationAngles.z);
+
+	
+	/*VecRect aux = vectorB;
+	aux.startPos = vectorB.finishPos;
+	aux.rotationAngles.x *= -1;
+	aux.rotationAngles.y *= -1;
+	aux.rotationAngles.z *= -1;
+	aux.finishPos.x = aux.magnitude * cos(aux.rotationAngles.y) * cos(aux.rotationAngles.z);
+	aux.finishPos.y = aux.magnitude * sin(aux.rotationAngles.x) * cos(aux.rotationAngles.y);
+	aux.finishPos.z = aux.magnitude * sin(aux.rotationAngles.z);
+
+	DrawLine3D(aux.startPos, aux.finishPos, PINK);*/
+
+	/*cube.vecA2 = vectorA;
+	Vector3 aux;
+	aux.x = vectorB.finishPos.x + vectorA.finishPos.x;
+	aux.y = vectorB.finishPos.y + vectorA.finishPos.y;
+	aux.z = vectorB.finishPos.z + vectorA.finishPos.z;
+	cube.vecA2.startPos = aux;
+
+	cube.vecB2.startPos = cube.vecA2.finishPos;
+	cube.vecB2.finishPos = vectorB.finishPos;*/
+
+}
+
+void BuildPyramid()
 {
 
 }
@@ -58,7 +115,7 @@ void Draw()
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 	BeginMode3D(camera);
-	DrawVectors();
+	DrawFirstCube();
 	//DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
 
 	EndMode3D();
@@ -66,11 +123,14 @@ void Draw()
 	EndDrawing();
 }
 
-void DrawVectors()
+void DrawFirstCube()
 {
 	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
 	DrawLine3D(vectorB.startPos, vectorB.finishPos, BLUE);
 	DrawLine3D(vectorC.startPos, vectorC.finishPos, GREEN);
+	DrawLine3D(cube.vecC2.startPos, cube.vecC2.finishPos, GREEN);
+	//DrawLine3D(cube.vecB2.startPos, cube.vecB2.finishPos, BROWN);
+
 }
 
 void InitVectors()
@@ -84,7 +144,7 @@ void InitVectors()
 	VecRect aux;
 	vectorA.startPos = startPos;
 	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	vectorA.magnitude = 100.0f;
+	vectorA.magnitude = 200.0f;
 
 	vectorA.finishPos.x = vectorA.magnitude * cos(vectorA.rotationAngles.y) * cos(vectorA.rotationAngles.z);
 	vectorA.finishPos.y = vectorA.magnitude * sin(vectorA.rotationAngles.x) * cos(vectorA.rotationAngles.y);
@@ -104,12 +164,11 @@ void InitVectors()
 	vectorB.finishPos.y = vectorB.magnitude * sin(vectorB.rotationAngles.x) * cos(vectorB.rotationAngles.y);
 	vectorB.finishPos.z = vectorB.magnitude * sin(vectorB.rotationAngles.z);
 
-	int mag = sqrt(pow(vectorA.finishPos.x - vectorA.startPos.x, 2.0f) + pow(vectorA.finishPos.y - vectorA.startPos.y, 2.0f) + pow(vectorA.finishPos.z - vectorA.startPos.z, 2.0f));
-
 	vectorC.magnitude = (1 / n) * vectorA.magnitude;
 
 	vectorC.startPos = startPos;
 
+	//cross product
 	vectorC.rotationAngles.x = vectorA.rotationAngles.x * vectorB.rotationAngles.x;
 	vectorC.rotationAngles.y = vectorA.rotationAngles.y * vectorB.rotationAngles.y;
 	vectorC.rotationAngles.z = vectorA.rotationAngles.z * vectorB.rotationAngles.z;
@@ -118,11 +177,6 @@ void InitVectors()
 	vectorC.finishPos.y = vectorC.magnitude * sin(vectorC.rotationAngles.x) * cos(vectorC.rotationAngles.y);
 	vectorC.finishPos.z = vectorC.magnitude * sin(vectorC.rotationAngles.z);
 
-	std::cout << "mag: " << vectorA.magnitude << std::endl;
-	std::cout << "mag (calculada): " << mag << std::endl;
-	std::cout << "x: " << vectorA.finishPos.x << std::endl;
-	std::cout << "y: " << vectorA.finishPos.y << std::endl;
-	std::cout << "z: " << vectorA.finishPos.z << std::endl;
 }
 
 void InitCamera()
