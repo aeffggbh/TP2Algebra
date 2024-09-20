@@ -43,7 +43,7 @@ int main(void)
 	VecRect aux;
 	vectorA.startPos = startPos;
 	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	vectorA.magnitude = 50.0f;
+	vectorA.magnitude = 100.0f;
 
 	vectorA.finishPos.x = vectorA.magnitude * cos(vectorA.rotationAngles.y) * cos(vectorA.rotationAngles.z);
 	vectorA.finishPos.y = vectorA.magnitude * sin(vectorA.rotationAngles.x) * cos(vectorA.rotationAngles.y);
@@ -65,7 +65,7 @@ int main(void)
 
 	int mag = sqrt(pow(vectorA.finishPos.x - vectorA.startPos.x, 2.0f) + pow(vectorA.finishPos.y - vectorA.startPos.y, 2.0f) + pow(vectorA.finishPos.z - vectorA.startPos.z, 2.0f));
 
-	vectorC.magnitude = 1 / n * vectorA.magnitude;
+	vectorC.magnitude = (1 / n) * vectorA.magnitude;
 
 	vectorC.startPos = startPos;
 
