@@ -1,6 +1,7 @@
 #include <iostream>
+#include <vector>
 #include "raylib.h"
-
+using namespace std;
 
 struct VecRect
 {
@@ -12,6 +13,10 @@ struct VecRect
 
 struct Cube
 {
+	VecRect vecA;
+	VecRect vecB;
+	VecRect vecC;
+	
 	VecRect vecA2;
 	VecRect vecA3;
 	VecRect vecA4;
@@ -27,20 +32,18 @@ struct Cube
 
 Camera3D camera;
 
-VecRect vectorA;
-VecRect vectorB;
-VecRect vectorC;
-Cube cube;
+vector<Cube> pyramidParts;
 
 float n = 5;
 
 void Init();
 void Update();
 void Draw();
-void BuildCube();
+void BuildCube(Cube& cube);
 void BuildPyramid();
-void DrawFirstCube();
-void InitVectors();
+void DrawPyramid();
+void DrawCube(Cube cube);
+void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude);
 void InitCamera();
 
 void GetFinishPosition(VecRect& vector);
@@ -72,8 +75,7 @@ void Init()
 	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
 
 	InitCamera();
-	InitVectors();
-	BuildCube();
+	BuildPyramid();
 
 	DisableCursor();
 }
@@ -96,42 +98,42 @@ void Update()
 		GetMouseWheelMove() * 2.0f);                              // Move to target (zoom)
 }
 
-void BuildCube()
+void BuildCube(Cube& cube)
 {
-	cube.vecA2 = vectorA;
-	cube.vecA2.startPos = vectorB.finishPos;
+	cube.vecA2 = cube.vecA;
+	cube.vecA2.startPos = cube.vecB.finishPos;
 	GetFinishPosition(cube.vecA2);
 
-	cube.vecB2 = vectorB;
-	cube.vecB2.startPos = vectorA.finishPos;
+	cube.vecB2 = cube.vecB;
+	cube.vecB2.startPos = cube.vecA.finishPos;
 	GetFinishPosition(cube.vecB2);
 
-	cube.vecC2 = vectorC;
-	cube.vecC2.startPos = vectorB.finishPos;
+	cube.vecC2 = cube.vecC;
+	cube.vecC2.startPos = cube.vecB.finishPos;
 	GetFinishPosition(cube.vecC2);
 
-	cube.vecC3 = vectorC;
-	cube.vecC3.startPos = vectorA.finishPos;
+	cube.vecC3 = cube.vecC;
+	cube.vecC3.startPos = cube.vecA.finishPos;
 	GetFinishPosition(cube.vecC3);
 
-	cube.vecC4 = vectorC;
+	cube.vecC4 = cube.vecC;
 	cube.vecC4.startPos = cube.vecA2.finishPos;
 	GetFinishPosition(cube.vecC4);
 
-	cube.vecA3 = vectorA;
+	cube.vecA3 = cube.vecA;
 	cube.vecA3.startPos = cube.vecC2.finishPos;
 	GetFinishPosition(cube.vecA3);
 
-	cube.vecA4 = vectorA;
-	cube.vecA4.startPos = vectorC.finishPos;
+	cube.vecA4 = cube.vecA;
+	cube.vecA4.startPos = cube.vecC.finishPos;
 	GetFinishPosition(cube.vecA4);
 
-	cube.vecB3 = vectorB;
+	cube.vecB3 = cube.vecB;
 	cube.vecB3.startPos = cube.vecC3.finishPos;
 	GetFinishPosition(cube.vecB3);
 
-	cube.vecB4 = vectorB;
-	cube.vecB4.startPos = vectorC.finishPos;
+	cube.vecB4 = cube.vecB;
+	cube.vecB4.startPos = cube.vecC.finishPos;
 	GetFinishPosition(cube.vecB4);
 }
 
@@ -139,7 +141,38 @@ void BuildCube()
 
 void BuildPyramid()
 {
+	bool pyramidFinished = false;
+	int maxDegrees = 360;
+	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
+	//Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
+	Vector3 startRotation = { 0,90,45 };
+	float startMagnitude = 100.0f;
+	int numCubes = 5;
 
+	Cube myCube;
+
+	do
+	{
+		InitVectors(offSet, startRotation, myCube, startMagnitude);
+		BuildCube(myCube); 
+
+		pyramidParts.push_back(myCube);
+
+
+		offSet.y += myCube.vecC.magnitude;
+		DrawCircle3D(offSet, 10, { 0.0f, 0.0f, 0.0f }, 0.0f, RED);
+		numCubes--;
+		if (numCubes == 0)
+			pyramidFinished = true;
+	} while (!pyramidFinished);
+}
+
+void DrawPyramid()
+{
+	for (int i = 0; i < pyramidParts.size(); i++)
+	{
+		DrawCube(pyramidParts[i]);
+	}
 }
 
 void Draw()
@@ -147,18 +180,18 @@ void Draw()
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 	BeginMode3D(camera);
-	DrawFirstCube();
+	DrawPyramid();
 
 	EndMode3D();
 
 	EndDrawing();
 }
 
-void DrawFirstCube()
+void DrawCube(Cube cube)
 {
-	DrawLine3D(vectorA.startPos, vectorA.finishPos, RED);
-	DrawLine3D(vectorB.startPos, vectorB.finishPos, BLUE);
-	DrawLine3D(vectorC.startPos, vectorC.finishPos, GREEN);
+	DrawLine3D(cube.vecA.startPos, cube.vecA.finishPos, RED);
+	DrawLine3D(cube.vecB.startPos, cube.vecB.finishPos, BLUE);
+	DrawLine3D(cube.vecC.startPos, cube.vecC.finishPos, GREEN);
 
 	DrawLine3D(cube.vecA2.startPos, cube.vecA2.finishPos, RED);
 	DrawLine3D(cube.vecA3.startPos, cube.vecA3.finishPos, RED);
@@ -173,51 +206,45 @@ void DrawFirstCube()
 	DrawLine3D(cube.vecC4.startPos, cube.vecC4.finishPos, GREEN);
 }
 
-void InitVectors()
+void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude)
 {
-	const int maxMagnitude = 1000;
-
-	int maxDegrees = 360;
-
-	Vector3 startPos = { 0.0f, 0.0f, 0.0f, };
 
 	VecRect aux;
-	vectorA.startPos = startPos;
-	vectorA.rotationAngles = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	//vectorA.rotationAngles = { 0,90,45 };
-	vectorA.magnitude = 200.0f;
+	cube.vecA.startPos = offSet;
+	cube.vecA.rotationAngles = rotationAngles;
+	cube.vecA.magnitude = magnitude;
 
-	GetFinishPosition(vectorA);
+	GetFinishPosition(cube.vecA);
 
-	aux = vectorA;
+	aux = cube.vecA;
 	aux.rotationAngles.x *= -1;
 	aux.rotationAngles.y *= -1;
 	aux.rotationAngles.z *= -1;
 
 
 	//Vector B
-	vectorB.rotationAngles = GetCrossProduct(vectorA.rotationAngles, aux.rotationAngles);
-
-	vectorB.magnitude = vectorA.magnitude;
-	GetFinishPosition(vectorB);
+	cube.vecB.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, aux.rotationAngles);
+	cube.vecB.startPos = offSet;
+	cube.vecB.magnitude = cube.vecA.magnitude;
+	GetFinishPosition(cube.vecB);
 
 
 	//Vector C
-	vectorC.magnitude = (1 / n) * vectorA.magnitude;
-	vectorC.startPos = startPos;
+	cube.vecC.magnitude = (1 / n) * cube.vecA.magnitude;
+	cube.vecC.startPos = offSet;
 
-	vectorC.rotationAngles = GetCrossProduct(vectorA.rotationAngles, vectorB.rotationAngles);
-	GetFinishPosition(vectorC);
+	cube.vecC.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, cube.vecB.rotationAngles);
+	GetFinishPosition(cube.vecC);
 
 }
 
 void InitCamera()
 {
-	camera.position = { 0.0f, 0.0f, 10.0f };  // Camera position
-	camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
-	camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-	camera.fovy = 64.0f;                                // Camera field-of-view Y
-	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+	camera.position = { 0.0f, 0.0f, 10.0f };	// Camera position
+	camera.target = { 0.0f, 0.0f, 0.0f };		// Camera looking at point
+	camera.up = { 0.0f, 1.0f, 0.0f };			// Camera up vector (rotation towards target)
+	camera.fovy = 64.0f;                        // Camera field-of-view Y
+	camera.projection = CAMERA_PERSPECTIVE;     // Camera mode type
 
 }
 
