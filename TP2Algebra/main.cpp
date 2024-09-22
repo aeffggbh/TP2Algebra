@@ -16,7 +16,7 @@ struct Cube
 	VecRect vecA;
 	VecRect vecB;
 	VecRect vecC;
-	
+
 	VecRect vecA2;
 	VecRect vecA3;
 	VecRect vecA4;
@@ -34,7 +34,7 @@ Camera3D camera;
 
 vector<Cube> pyramidParts;
 
-float n = 5;
+float n = 10;
 
 void Init();
 void Update();
@@ -43,7 +43,7 @@ void BuildCube(Cube& cube);
 void BuildPyramid();
 void DrawPyramid();
 void DrawCube(Cube cube);
-void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude);
+void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude);
 void InitCamera();
 
 void GetFinishPosition(VecRect& vector);
@@ -145,25 +145,42 @@ void BuildPyramid()
 	int maxDegrees = 360;
 	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
 	//Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	Vector3 startRotation = { 0,90,45 };
-	float startMagnitude = 100.0f;
+	Vector3 startRotation = { 270,98,28 };
+
+	const float baseMagnitude = n * 10;
+	float startMagnitude = baseMagnitude;
 	int numCubes = 5;
 
 	Cube myCube;
 
 	do
 	{
-		InitVectors(offSet, startRotation, myCube, startMagnitude);
-		BuildCube(myCube); 
+		InitVectors(offSet, startRotation, myCube, startMagnitude, baseMagnitude);
 
-		pyramidParts.push_back(myCube);
+		if (myCube.vecA.magnitude >= myCube.vecC.magnitude * 2)
+		{
+			BuildCube(myCube);
 
+			pyramidParts.push_back(myCube);
 
-		offSet.y += myCube.vecC.magnitude;
-		DrawCircle3D(offSet, 10, { 0.0f, 0.0f, 0.0f }, 0.0f, RED);
-		numCubes--;
-		if (numCubes == 0)
+			offSet = myCube.vecC.finishPos;
+			offSet.y -= myCube.vecC.magnitude;
+
+			cout << "CUBE" << numCubes << ": " << endl;
+			cout << "OSX: " << offSet.x << endl;
+			cout << "old Y: " << myCube.vecC.finishPos.y << endl;
+			cout << "new Y: " << offSet.y << endl;
+			cout << "OSZ: " << offSet.z << endl;
+
+			DrawCircle(offSet.x, offSet.y, 10, RED);
+
+			numCubes--;
+			startMagnitude -= myCube.vecC.magnitude * 2;
+
+		}
+		else
 			pyramidFinished = true;
+
 	} while (!pyramidFinished);
 }
 
@@ -206,7 +223,7 @@ void DrawCube(Cube cube)
 	DrawLine3D(cube.vecC4.startPos, cube.vecC4.finishPos, GREEN);
 }
 
-void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude)
+void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude)
 {
 
 	VecRect aux;
@@ -230,7 +247,7 @@ void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magni
 
 
 	//Vector C
-	cube.vecC.magnitude = (1 / n) * cube.vecA.magnitude;
+	cube.vecC.magnitude = (1 / n) * baseMagnitude;
 	cube.vecC.startPos = offSet;
 
 	cube.vecC.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, cube.vecB.rotationAngles);
