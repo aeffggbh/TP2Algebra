@@ -164,7 +164,7 @@ void BuildPyramid()
 			pyramidParts.push_back(myCube);
 
 			offSet = myCube.vecC.finishPos;
-			offSet.y -= myCube.vecC.magnitude;
+			offSet.y += myCube.vecC.magnitude;
 
 			cout << "CUBE" << numCubes << ": " << endl;
 			cout << "OSX: " << offSet.x << endl;
