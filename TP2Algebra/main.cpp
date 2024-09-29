@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "raylib.h"
+#include "raymath.h"
 using namespace std;
 
 struct VecRect
@@ -36,6 +37,12 @@ vector<Cube> pyramidParts;
 
 float n = 10;
 
+float totalPerimeter = 0;
+float totalArea = 0;
+float totalVolume = 0;
+
+bool cubeUpdated = false;
+
 void Init();
 void Update();
 void Draw();
@@ -45,6 +52,7 @@ void DrawPyramid();
 void DrawCube(Cube cube);
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude);
 void InitCamera();
+void NormalizeMagnitude(float x, float y, float magnitude);
 
 void GetFinishPosition(VecRect& vector);
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB);
@@ -58,7 +66,7 @@ int main(void)
 	SetTargetFPS(60);
 
 	while (!WindowShouldClose())
-	{
+	{	
 		Update();
 		Draw();
 	}
@@ -75,13 +83,24 @@ void Init()
 	InitWindow(screenWidth, screenHeight, "TP2 Algebra");
 
 	InitCamera();
-	BuildPyramid();
+	//BuildPyramid();
 
 	DisableCursor();
 }
 
 void Update()
 {
+	char aux = GetCharPressed();
+	float num = 0;
+	if (aux >= 49 && aux <= 57)
+	{
+		num = aux - 48;
+		n = num;
+		pyramidParts.clear();
+		BuildPyramid();
+		cubeUpdated = true;
+	}
+
 	UpdateCameraPro(&camera,
 		Vector3{
 		(IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * 0.1f -      // Move forward-backward
@@ -96,6 +115,9 @@ void Update()
 			0.0f                                                // Rotation: roll
 		},
 		GetMouseWheelMove() * 2.0f);                              // Move to target (zoom)
+
+	DrawText("Press a number between 1 and 9", 0, 0, 20, RED);
+	DrawText("Move with the arrow keys and the mouse wheel", 0, 30, 20, RED);
 }
 
 void BuildCube(Cube& cube)
@@ -144,12 +166,16 @@ void BuildPyramid()
 	bool pyramidFinished = false;
 	int maxDegrees = 360;
 	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
-	//Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	Vector3 startRotation = { 270,98,28 };
+	Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
+	//Vector3 startRotation = { 0,1,0 };
 
 	const float baseMagnitude = n * 10;
 	float startMagnitude = baseMagnitude;
 	int numCubes = 5;
+
+	float perimeter = 0;
+	float area = 0;
+	float volume = 0;
 
 	Cube myCube;
 
@@ -157,26 +183,34 @@ void BuildPyramid()
 	{
 		InitVectors(offSet, startRotation, myCube, startMagnitude, baseMagnitude);
 
-		if (myCube.vecA.magnitude >= myCube.vecC.magnitude * 2)
+		if (myCube.vecA.magnitude >= myCube.vecC.magnitude)
 		{
 			BuildCube(myCube);
 
 			pyramidParts.push_back(myCube);
 
-			offSet = myCube.vecC.finishPos;
-			offSet.y += myCube.vecC.magnitude;
+			VecRect midPoint = myCube.vecA4;
+			midPoint.rotationAngles = Vector3Add(myCube.vecA4.rotationAngles, myCube.vecB4.rotationAngles);
+			midPoint.rotationAngles = Vector3Divide(midPoint.rotationAngles, { 2.0f, 2.0f, 2.0f });
 
-			cout << "CUBE" << numCubes << ": " << endl;
-			cout << "OSX: " << offSet.x << endl;
-			cout << "old Y: " << myCube.vecC.finishPos.y << endl;
-			cout << "new Y: " << offSet.y << endl;
-			cout << "OSZ: " << offSet.z << endl;
+			midPoint.magnitude = myCube.vecC.magnitude/2;
+			GetFinishPosition(midPoint);
+			
 
-			DrawCircle(offSet.x, offSet.y, 10, RED);
+			offSet = midPoint.finishPos;
 
+			startMagnitude -= myCube.vecC.magnitude*2;
+			
+			perimeter += 12 * myCube.vecC.magnitude;
+			//((myCube.vecA.magnitude * 8.0f) + (myCube.vecC.magnitude * 4.0f));
+			area += ((myCube.vecA.magnitude * 2.0f) + (myCube.vecC.magnitude * 2.0f)) * 6.0f;
+			volume += ((myCube.vecA.magnitude * myCube.vecB.magnitude) * myCube.vecC.magnitude);
+
+			totalPerimeter += perimeter;
+			totalArea += area;
+			totalVolume += volume;
+			
 			numCubes--;
-			startMagnitude -= myCube.vecC.magnitude * 2;
-
 		}
 		else
 			pyramidFinished = true;
@@ -206,6 +240,12 @@ void Draw()
 
 void DrawCube(Cube cube)
 {
+	if (cubeUpdated)
+	{
+		ClearBackground(WHITE);
+		cubeUpdated = false;
+	}
+
 	DrawLine3D(cube.vecA.startPos, cube.vecA.finishPos, RED);
 	DrawLine3D(cube.vecB.startPos, cube.vecB.finishPos, BLUE);
 	DrawLine3D(cube.vecC.startPos, cube.vecC.finishPos, GREEN);
@@ -225,6 +265,7 @@ void DrawCube(Cube cube)
 
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude)
 {
+	Vector3 zDir = { 0,0,1 };
 
 	VecRect aux;
 	cube.vecA.startPos = offSet;
@@ -234,10 +275,7 @@ void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magni
 	GetFinishPosition(cube.vecA);
 
 	aux = cube.vecA;
-	aux.rotationAngles.x *= -1;
-	aux.rotationAngles.y *= -1;
-	aux.rotationAngles.z *= -1;
-
+	aux.rotationAngles = zDir;
 
 	//Vector B
 	cube.vecB.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, aux.rotationAngles);
@@ -260,7 +298,7 @@ void InitCamera()
 	camera.position = { 0.0f, 0.0f, 10.0f };	// Camera position
 	camera.target = { 0.0f, 0.0f, 0.0f };		// Camera looking at point
 	camera.up = { 0.0f, 1.0f, 0.0f };			// Camera up vector (rotation towards target)
-	camera.fovy = 64.0f;                        // Camera field-of-view Y
+	camera.fovy = 85.0f;                        // Camera field-of-view Y
 	camera.projection = CAMERA_PERSPECTIVE;     // Camera mode type
 
 }
@@ -270,15 +308,17 @@ void GetFinishPosition(VecRect& vector)
 	vector.finishPos.x = vector.startPos.x + vector.magnitude * cos(vector.rotationAngles.y) * cos(vector.rotationAngles.z);
 	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(vector.rotationAngles.x) * cos(vector.rotationAngles.y);
 	vector.finishPos.z = vector.startPos.z + vector.magnitude * sin(vector.rotationAngles.z);
+
+
 }
 
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB)
 {
 	Vector3 rotation;
 
-	rotation.x = rotationA.x * rotationB.x;
-	rotation.y = rotationA.y * rotationB.y;
-	rotation.z = rotationA.z * rotationB.z;
+	rotation.x = rotationA.y * rotationB.z - rotationA.z * rotationB.y;
+	rotation.y = rotationA.z * rotationB.x - rotationA.x * rotationB.z;
+	rotation.z = rotationA.x * rotationB.y - rotationA.y * rotationB.x;
 
 	return rotation;
 }
