@@ -1,7 +1,10 @@
 #include <iostream>
 #include <vector>
+#include <string>
+
 #include "raylib.h"
 #include "raymath.h"
+
 using namespace std;
 
 struct VecRect
@@ -52,7 +55,6 @@ void DrawPyramid();
 void DrawCube(Cube cube);
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude);
 void InitCamera();
-void NormalizeMagnitude(float x, float y, float magnitude);
 
 void GetFinishPosition(VecRect& vector);
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB);
@@ -66,7 +68,7 @@ int main(void)
 	SetTargetFPS(60);
 
 	while (!WindowShouldClose())
-	{	
+	{
 		Update();
 		Draw();
 	}
@@ -96,6 +98,11 @@ void Update()
 	{
 		num = aux - 48;
 		n = num;
+
+		totalArea = 0;
+		totalPerimeter = 0;
+		totalVolume = 0;
+
 		pyramidParts.clear();
 		BuildPyramid();
 		cubeUpdated = true;
@@ -167,9 +174,8 @@ void BuildPyramid()
 	int maxDegrees = 360;
 	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
 	Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
-	//Vector3 startRotation = { 0,1,0 };
 
-	const float baseMagnitude = n * 10;
+	const float baseMagnitude = GetRandomValue(20, 100);
 	float startMagnitude = baseMagnitude;
 	int numCubes = 5;
 
@@ -190,17 +196,19 @@ void BuildPyramid()
 			pyramidParts.push_back(myCube);
 
 			VecRect midPoint = myCube.vecA4;
-			midPoint.rotationAngles = Vector3Add(myCube.vecA4.rotationAngles, myCube.vecB4.rotationAngles);
-			midPoint.rotationAngles = Vector3Divide(midPoint.rotationAngles, { 2.0f, 2.0f, 2.0f });
-
-			midPoint.magnitude = myCube.vecC.magnitude/2;
+			midPoint.magnitude = myCube.vecC.magnitude;
 			GetFinishPosition(midPoint);
-			
+
+			midPoint.startPos = midPoint.finishPos;
+			midPoint.rotationAngles = myCube.vecB4.rotationAngles;
+			GetFinishPosition(midPoint);
+
+
 
 			offSet = midPoint.finishPos;
 
-			startMagnitude -= myCube.vecC.magnitude*2;
-			
+			startMagnitude -= myCube.vecC.magnitude * 2;
+
 			perimeter += 12 * myCube.vecC.magnitude;
 			//((myCube.vecA.magnitude * 8.0f) + (myCube.vecC.magnitude * 4.0f));
 			area += ((myCube.vecA.magnitude * 2.0f) + (myCube.vecC.magnitude * 2.0f)) * 6.0f;
@@ -209,7 +217,7 @@ void BuildPyramid()
 			totalPerimeter += perimeter;
 			totalArea += area;
 			totalVolume += volume;
-			
+
 			numCubes--;
 		}
 		else
@@ -234,6 +242,14 @@ void Draw()
 	DrawPyramid();
 
 	EndMode3D();
+
+	string area = "Area: " + to_string(totalArea);
+	string volume = "Volumen: " + to_string(totalVolume);
+	string perimeter = "Perimetro: " + to_string(totalPerimeter);
+
+	DrawText(area.c_str(), GetScreenWidth() - MeasureText(area.c_str(), 15) - 5, 0, 15, RED);
+	DrawText(volume.c_str(), GetScreenWidth() - MeasureText(volume.c_str(), 15) - 5, 30, 15, RED);
+	DrawText(perimeter.c_str(), GetScreenWidth() - MeasureText(perimeter.c_str(), 15) - 5, 60, 15, RED);
 
 	EndDrawing();
 }
@@ -303,16 +319,14 @@ void InitCamera()
 
 }
 
-void GetFinishPosition(VecRect& vector)
+void GetFinishPosition(VecRect& vector) // Rotacion de angulos euler
 {
 	vector.finishPos.x = vector.startPos.x + vector.magnitude * cos(vector.rotationAngles.y) * cos(vector.rotationAngles.z);
 	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(vector.rotationAngles.x) * cos(vector.rotationAngles.y);
 	vector.finishPos.z = vector.startPos.z + vector.magnitude * sin(vector.rotationAngles.z);
-
-
 }
 
-Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB)
+Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB) // Producto cruz
 {
 	Vector3 rotation;
 
