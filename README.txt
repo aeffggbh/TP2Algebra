@@ -1,5 +1,5 @@
 # TP2Algebra
-Claudio Guzmeroli: Dueño
-Sofia Alvarez
+Claudio Guzmeroli
+Sofia Alvarez: Dueña
 Jonas Canaza
 Ezequiel Prieto
