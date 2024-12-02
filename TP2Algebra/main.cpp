@@ -8,59 +8,56 @@
 using namespace std;
 
 //Rectas
-struct VecRect
+struct Rect
 {
+	//Rect
 	//positions
 	Vector3 startPos;
 	Vector3 finishPos;
+
+	//Vector
 	//direction
-	Vector3 rotationAngles;
+	Vector3 direction;
 	//length
 	float magnitude;
 };
 
 struct Cube
 {
-	//Cara 1
+	//un cubo se compone de 12 rectas
 
 	//vector random
-	VecRect vecA;
+	Rect vecA;
 	//vector a 90 grados del primero
-	VecRect vecB;
+	Rect vecB;
 	//vector a 90 grados de los dos anteriores
-	VecRect vecC;
+	Rect vecC;
 
+	Rect vecA2;
+	Rect vecB2;
+	Rect vecC2;
 
-	//Cara 2
+	Rect vecA3;
+	Rect vecB3;
+	Rect vecC3;
 
-	VecRect vecA2;
-	VecRect vecB2;
-	VecRect vecC2;
-
-	//Cara 3
-
-	VecRect vecA3;
-	VecRect vecB3;
-	VecRect vecC3;
-
-	//Cara 4
-
-	VecRect vecA4;
-	VecRect vecB4;
-	VecRect vecC4;
+	Rect vecA4;
+	Rect vecB4;
+	Rect vecC4;
 };
-
-Camera3D camera;
 
 vector<Cube> pyramidParts;
 
-float n = 10;
+//-
 
+float n = 0.0f;
 float totalPerimeter = 0;
 float totalArea = 0;
 float totalVolume = 0;
 
 bool cubeUpdated = false;
+
+Camera3D camera;
 
 void Init();
 void Update();
@@ -72,9 +69,10 @@ void DrawCube(Cube cube);
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude);
 void InitCamera();
 
-void GetFinishPosition(VecRect& vector);
+void GetFinishPosition(Rect& vector);
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB);
 
+//-
 int main(void)
 {
 	srand(time(NULL));
@@ -94,6 +92,7 @@ int main(void)
 	return 0;
 }
 
+//-
 void Init()
 {
 	const int screenWidth = 800;
@@ -109,12 +108,11 @@ void Init()
 void Update()
 {
 	char aux = GetCharPressed();
-	float num = 0;
+	int num = 0;
 
-			 //'1'		  //'9'
-	if (aux >= 49 && aux <= 57)
+	if (aux >= '1' && aux <= '9')
 	{
-		num = aux - 48;
+		num = aux - '0';
 		n = num;
 
 		totalArea = 0;
@@ -123,18 +121,19 @@ void Update()
 
 		pyramidParts.clear();
 		BuildPyramid();
-		cubeUpdated = true;
 	}
 
+	//-
 	UpdateCameraPro(&camera,
 		Vector3{
 			(IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * 0.1f -      // Move forward-backward
 			(IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) * 0.1f,
+
 			(IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) * 0.1f -   // Move right-left
 			(IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) * 0.1f,
+
 			0.0f                                                // Move up-down
 		},
-		//wtf?
 		Vector3{
 			GetMouseDelta().x * 0.05f,                            // Rotation: yaw
 			GetMouseDelta().y * 0.05f,                            // Rotation: pitch
@@ -190,15 +189,23 @@ void BuildCube(Cube& cube)
 void BuildPyramid()
 {
 	bool pyramidFinished = false;
-	int maxDegrees = 360;
-	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
-	Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
 
-	//la magnitud de todo ajaj
+	const int maxDegreesT = 360;
+	const int maxDegreesD = 180;
+	const int theta = rand() % maxDegreesT;
+	const int phi =	rand() % maxDegreesD;
+
+	Vector3 startRotation = 
+	{ 
+		(float)theta, //x
+		(float)theta, //y
+		(float)phi //z
+	};
+
+	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
+
 	const float baseMagnitude = GetRandomValue(20, 100);
 	float startMagnitude = baseMagnitude;
-	//variable sin usar xd
-	int numCubes = 5;
 
 	float perimeter = 0;
 	float area = 0;
@@ -216,32 +223,28 @@ void BuildPyramid()
 
 			pyramidParts.push_back(myCube);
 
-			VecRect midPoint = myCube.vecA4;
+			Rect midPoint = myCube.vecA4;
 			midPoint.magnitude = myCube.vecC.magnitude;
 			GetFinishPosition(midPoint);
 
 			midPoint.startPos = midPoint.finishPos;
-			midPoint.rotationAngles = myCube.vecB4.rotationAngles;
+			midPoint.direction = myCube.vecB4.direction;
 			GetFinishPosition(midPoint);
 
 			offSet = midPoint.finishPos;
 
 			startMagnitude -= myCube.vecC.magnitude * 2;
 
-			//error; no se toma en cuenta que no todos miden lo mismo que el vector C
-			perimeter += 12 * myCube.vecC.magnitude;
-			//quedo como future fix y nunca se testeó
-			//((myCube.vecA.magnitude * 8.0f) + (myCube.vecC.magnitude * 4.0f));
+			//perimetro de un cuboide (suma de alto, ancho y profundidad)
+			perimeter = ((myCube.vecA.magnitude * 8.0f) + (myCube.vecC.magnitude * 4.0f));
 			//area de las 6 caras
-			area += ((myCube.vecA.magnitude * 2.0f) + (myCube.vecC.magnitude * 2.0f)) * 6.0f;
+			area = ((myCube.vecA.magnitude * 2.0f) + (myCube.vecC.magnitude * 2.0f)) * 6.0f;
 			//formula de volumen para el cuboide. (largo * profundidad * alto)
-			volume += ((myCube.vecA.magnitude * myCube.vecB.magnitude) * myCube.vecC.magnitude);
+			volume = ((myCube.vecA.magnitude * myCube.vecB.magnitude) * myCube.vecC.magnitude);
 
 			totalPerimeter += perimeter;
 			totalArea += area;
 			totalVolume += volume;
-
-			numCubes--;
 		}
 		else
 			pyramidFinished = true;
@@ -252,9 +255,7 @@ void BuildPyramid()
 void DrawPyramid()
 {
 	for (int i = 0; i < pyramidParts.size(); i++)
-	{
 		DrawCube(pyramidParts[i]);
-	}
 }
 
 void Draw()
@@ -269,71 +270,68 @@ void Draw()
 	string area = "Area: " + to_string(totalArea);
 	string volume = "Volumen: " + to_string(totalVolume);
 	string perimeter = "Perimetro: " + to_string(totalPerimeter);
+	
+	int fontSize = 30;
 
-	DrawText(area.c_str(), GetScreenWidth() - MeasureText(area.c_str(), 15) - 5, 0, 15, RED);
-	DrawText(volume.c_str(), GetScreenWidth() - MeasureText(volume.c_str(), 15) - 5, 30, 15, RED);
-	DrawText(perimeter.c_str(), GetScreenWidth() - MeasureText(perimeter.c_str(), 15) - 5, 60, 15, RED);
+	DrawText(area.c_str(), GetScreenWidth() - MeasureText(area.c_str(), fontSize) - 5, 0, fontSize, RED);
+	DrawText(volume.c_str(), GetScreenWidth() - MeasureText(volume.c_str(), fontSize) - 5, 30, fontSize, RED);
+	DrawText(perimeter.c_str(), GetScreenWidth() - MeasureText(perimeter.c_str(), fontSize) - 5, 60, fontSize, RED);
 
 	EndDrawing();
 }
 
 void DrawCube(Cube cube)
 {
-	if (cubeUpdated)
-	{
-		ClearBackground(WHITE);
-		cubeUpdated = false;
-	}
-
-	//Cara 1
 	DrawLine3D(cube.vecA.startPos, cube.vecA.finishPos, RED);
-	DrawLine3D(cube.vecB.startPos, cube.vecB.finishPos, RED);
-	DrawLine3D(cube.vecC.startPos, cube.vecC.finishPos, RED);
+	DrawLine3D(cube.vecB.startPos, cube.vecB.finishPos, BLUE);
+	DrawLine3D(cube.vecC.startPos, cube.vecC.finishPos, GREEN);
 
-	//Cara 2
-	DrawLine3D(cube.vecA2.startPos, cube.vecA2.finishPos, BLUE);
+	DrawLine3D(cube.vecA2.startPos, cube.vecA2.finishPos, RED);
 	DrawLine3D(cube.vecB2.startPos, cube.vecB2.finishPos, BLUE);
-	DrawLine3D(cube.vecC2.startPos, cube.vecC2.finishPos, BLUE);
+	DrawLine3D(cube.vecC2.startPos, cube.vecC2.finishPos, GREEN);
 
-	//Cara 3
-	DrawLine3D(cube.vecA3.startPos, cube.vecA3.finishPos, GREEN);
-	DrawLine3D(cube.vecB3.startPos, cube.vecB3.finishPos, GREEN);
+	DrawLine3D(cube.vecA3.startPos, cube.vecA3.finishPos, RED);
+	DrawLine3D(cube.vecB3.startPos, cube.vecB3.finishPos, BLUE);
 	DrawLine3D(cube.vecC3.startPos, cube.vecC3.finishPos, GREEN);
-	
-	//Cara 4
-	DrawLine3D(cube.vecA4.startPos, cube.vecA4.finishPos, YELLOW);
-	DrawLine3D(cube.vecB4.startPos, cube.vecB4.finishPos, YELLOW);
-	DrawLine3D(cube.vecC4.startPos, cube.vecC4.finishPos, YELLOW);
-	
+
+	DrawLine3D(cube.vecA4.startPos, cube.vecA4.finishPos, RED);
+	DrawLine3D(cube.vecB4.startPos, cube.vecB4.finishPos, BLUE);
+	DrawLine3D(cube.vecC4.startPos, cube.vecC4.finishPos, GREEN);
+
 }
 
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude)
 {
-	// ?? no me acuerdo
-	Vector3 zDir = { 0,0,1 };
+	//Vector A
 
-	VecRect aux;
 	cube.vecA.startPos = offSet;
-	cube.vecA.rotationAngles = rotationAngles;
+	cube.vecA.direction = rotationAngles;
 	cube.vecA.magnitude = magnitude;
 
 	GetFinishPosition(cube.vecA);
 
-	aux = cube.vecA;
-	aux.rotationAngles = zDir;
+	//Vector B	
 
-	//Vector B
-	cube.vecB.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, aux.rotationAngles);
+	Vector3 zDir = { 0,0,1 };
+	Rect aux;
+
+	aux = cube.vecA;
+	aux.direction = zDir;
+
+	cube.vecB.direction = GetCrossProduct(cube.vecA.direction, aux.direction);
 	cube.vecB.startPos = offSet;
 	cube.vecB.magnitude = cube.vecA.magnitude;
 	GetFinishPosition(cube.vecB);
 
 
 	//Vector C
-	cube.vecC.magnitude = (1 / n) * baseMagnitude;
+
+	float fraction = 1 / n;
+
+	cube.vecC.magnitude = fraction * baseMagnitude;
 	cube.vecC.startPos = offSet;
 
-	cube.vecC.rotationAngles = GetCrossProduct(cube.vecA.rotationAngles, cube.vecB.rotationAngles);
+	cube.vecC.direction = GetCrossProduct(cube.vecA.direction, cube.vecB.direction);
 	GetFinishPosition(cube.vecC);
 }
 
@@ -342,16 +340,23 @@ void InitCamera()
 	camera.position = { 0.0f, 0.0f, 10.0f };	// Camera position
 	camera.target = { 0.0f, 0.0f, 0.0f };		// Camera looking at point
 	camera.up = { 0.0f, 1.0f, 0.0f };			// Camera up vector (rotation towards target)
-	camera.fovy = 85.0f;                        // Camera field-of-view Y
+	camera.fovy = 90.0f;                        // Camera field-of-view Y
 	camera.projection = CAMERA_PERSPECTIVE;     // Camera mode type
 
 }
 
-void GetFinishPosition(VecRect& vector) // Rotacion de angulos euler
+//Coordenadas esfericas
+void GetFinishPosition(Rect& vector)
 {
-	vector.finishPos.x = vector.startPos.x + vector.magnitude * cos(vector.rotationAngles.y) * cos(vector.rotationAngles.z);
-	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(vector.rotationAngles.x) * cos(vector.rotationAngles.y);
-	vector.finishPos.z = vector.startPos.z + vector.magnitude * sin(vector.rotationAngles.z);
+	// Convert degrees to radians
+	double radiansX = vector.direction.x * (PI / 180.0);
+	double radiansY = vector.direction.y * (PI / 180.0);
+
+	//matrices de rototraslacion
+																//vertical		//horizontal
+	vector.finishPos.x = vector.startPos.x + vector.magnitude * sin(radiansX) * cos(radiansY);
+	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(radiansX) * sin(radiansY);
+	vector.finishPos.z = vector.startPos.z + vector.magnitude * cos(radiansX);
 }
 
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB) // Producto cruz
