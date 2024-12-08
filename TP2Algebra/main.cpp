@@ -7,10 +7,8 @@
 
 using namespace std;
 
-//Rectas
-struct Rect
+struct Vector
 {
-	//Rect
 	//positions
 	Vector3 startPos;
 	Vector3 finishPos;
@@ -24,26 +22,26 @@ struct Rect
 
 struct Cube
 {
-	//un cubo se compone de 12 rectas
+	//un cubo se compone de 12 segmentos
 
 	//vector random
-	Rect vecA;
+	Vector vecA;
 	//vector a 90 grados del primero
-	Rect vecB;
+	Vector vecB;
 	//vector a 90 grados de los dos anteriores
-	Rect vecC;
+	Vector vecC;
 
-	Rect vecA2;
-	Rect vecB2;
-	Rect vecC2;
+	Vector vecA2;
+	Vector vecB2;
+	Vector vecC2;
 
-	Rect vecA3;
-	Rect vecB3;
-	Rect vecC3;
+	Vector vecA3;
+	Vector vecB3;
+	Vector vecC3;
 
-	Rect vecA4;
-	Rect vecB4;
-	Rect vecC4;
+	Vector vecA4;
+	Vector vecB4;
+	Vector vecC4;
 };
 
 vector<Cube> pyramidParts;
@@ -69,7 +67,7 @@ void DrawCube(Cube cube);
 void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magnitude, float baseMagnitude);
 void InitCamera();
 
-void GetFinishPosition(Rect& vector);
+void GetFinishPosition(Vector& vector);
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB);
 
 //-
@@ -190,17 +188,8 @@ void BuildPyramid()
 {
 	bool pyramidFinished = false;
 
-	const int maxDegreesT = 360;
-	const int maxDegreesD = 180;
-	const int theta = rand() % maxDegreesT;
-	const int phi =	rand() % maxDegreesD;
-
-	Vector3 startRotation = 
-	{ 
-		(float)theta, //x
-		(float)theta, //y
-		(float)phi //z
-	};
+	int maxDegrees = 360;
+	Vector3 startRotation = { (float)(rand() % maxDegrees), (float)(rand() % maxDegrees), (float)(rand() % maxDegrees) };
 
 	Vector3 offSet = { 0.0f, 0.0f, 0.0f };
 
@@ -223,15 +212,15 @@ void BuildPyramid()
 
 			pyramidParts.push_back(myCube);
 
-			Rect midPoint = myCube.vecA4;
-			midPoint.magnitude = myCube.vecC.magnitude;
-			GetFinishPosition(midPoint);
+			Vector nextOffSet = myCube.vecA4;
+			nextOffSet.magnitude = myCube.vecC.magnitude;
+			GetFinishPosition(nextOffSet);
 
-			midPoint.startPos = midPoint.finishPos;
-			midPoint.direction = myCube.vecB4.direction;
-			GetFinishPosition(midPoint);
+			nextOffSet.startPos = nextOffSet.finishPos;
+			nextOffSet.direction = myCube.vecB4.direction;
+			GetFinishPosition(nextOffSet);
 
-			offSet = midPoint.finishPos;
+			offSet = nextOffSet.finishPos;
 
 			startMagnitude -= myCube.vecC.magnitude * 2;
 
@@ -270,7 +259,7 @@ void Draw()
 	string area = "Area: " + to_string(totalArea);
 	string volume = "Volumen: " + to_string(totalVolume);
 	string perimeter = "Perimetro: " + to_string(totalPerimeter);
-	
+
 	int fontSize = 30;
 
 	DrawText(area.c_str(), GetScreenWidth() - MeasureText(area.c_str(), fontSize) - 5, 0, fontSize, RED);
@@ -313,7 +302,7 @@ void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magni
 	//Vector B	
 
 	Vector3 zDir = { 0,0,1 };
-	Rect aux;
+	Vector aux;
 
 	aux = cube.vecA;
 	aux.direction = zDir;
@@ -321,6 +310,7 @@ void InitVectors(Vector3 offSet, Vector3 rotationAngles, Cube& cube, float magni
 	cube.vecB.direction = GetCrossProduct(cube.vecA.direction, aux.direction);
 	cube.vecB.startPos = offSet;
 	cube.vecB.magnitude = cube.vecA.magnitude;
+
 	GetFinishPosition(cube.vecB);
 
 
@@ -345,18 +335,13 @@ void InitCamera()
 
 }
 
-//Coordenadas esfericas
-void GetFinishPosition(Rect& vector)
+//rotaciones euler pero relativos a la posicion inicial en vez del 0,0, por eso se suma.
+void GetFinishPosition(Vector& vector)
 {
-	// Convert degrees to radians
-	double radiansX = vector.direction.x * (PI / 180.0);
-	double radiansY = vector.direction.y * (PI / 180.0);
+	vector.finishPos.x = vector.startPos.x + vector.magnitude * cos(vector.direction.y) * cos(vector.direction.z);
+	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(vector.direction.x) * cos(vector.direction.y);
+	vector.finishPos.z = vector.startPos.z + vector.magnitude * sin(vector.direction.z);
 
-	//matrices de rototraslacion
-																//vertical		//horizontal
-	vector.finishPos.x = vector.startPos.x + vector.magnitude * sin(radiansX) * cos(radiansY);
-	vector.finishPos.y = vector.startPos.y + vector.magnitude * sin(radiansX) * sin(radiansY);
-	vector.finishPos.z = vector.startPos.z + vector.magnitude * cos(radiansX);
 }
 
 Vector3 GetCrossProduct(Vector3 rotationA, Vector3 rotationB) // Producto cruz
